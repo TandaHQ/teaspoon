@@ -101,7 +101,22 @@ end
 
 begin
   require 'action_view'
-  if ActionView::VERSION::STRING >= '4.2.5'
+  if ActionView::VERSION::STRING >= '5.1.0'
+    require 'action_view/helpers/asset_tag_helper'
+    module ActionView::Helpers::AssetTagHelper
+      def javascript_include_tag(*sources)
+        options = sources.extract_options!.stringify_keys
+        path_options = options.extract!('protocol', 'extname', 'host', 'skip_pipeline').symbolize_keys
+        path_options[:debug] = options['allow_non_precompiled']
+        sources.uniq.map { |source|
+          tag_options = {
+            "src" => path_to_javascript(source, path_options)
+          }.merge!(options)
+          content_tag(:script, "", tag_options)
+        }.join("\n").html_safe
+      end
+    end
+  elsif ActionView::VERSION::STRING >= '4.2.5'
     require 'action_view/helpers/asset_tag_helper'
     module ActionView::Helpers::AssetTagHelper
       def javascript_include_tag(*sources)
